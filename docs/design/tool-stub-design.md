@@ -7,9 +7,9 @@
 
 ## 概述
 
-Session 写入阶段会将超过阈值的 tool output 保存到 `ToolResultStore`，把原 `ToolPart.tool_output` 替换为 stub 文本并保留 `tool_output_ref`，之后可通过 `read/search/list` 按 ref 回溯原文。这套 externalize 链路在本次改动前已存在。
+启用 externalize 后，Session 写入阶段会按单条阈值或整轮预算选择 tool output。原文成功保存到 `ToolResultStore` 后，原 `ToolPart.tool_output` 被替换为 stub 文本并保留 `tool_output_ref`，之后可通过 `read/search/list` 回溯原文。保存失败时按 `failure_mode` 处理，不保证生成可回溯的 ref。这套 externalize 链路在本文所述改动前已存在。
 
-本次改动只替换 stub 中的 preview 生成方式：从 `head + tail` 截断改为按内容类型和 MIME 生成规则化摘要（JSON、表格、代码等）。externalize 的触发条件、存储位置和回溯方式不变。
+本文所述改动将 stub 中的 preview 从 `head + tail` 截断改为按内容类型和 MIME 生成规则化摘要（JSON、表格、代码等），并按渲染后 stub 的实际长度计算整轮预算，只在能减少内联长度时额外选取输出进行 externalize。单条阈值、存储位置和回溯方式不变。
 
 摘要生成不调用 LLM。`preview_chars` 仅用于无法规则化时的 head/tail 回退。
 

@@ -3,7 +3,7 @@
 > 日期: 2026-04-23
 > 状态: Draft
 > 分支: feat/memory_isolation
-> 阅读范围：本文保留 2026 年 4 月的调研和目标设计。竞品描述限于当时分析的版本；未提供可复现依据的性能数字不作为当前产品对比。T+1 整理、PPR 和示例配置也不代表默认启用的能力。当前记忆接口见[记忆 API](../zh/api/16-memory.md)。
+> 阅读范围：本文保留 2026 年 4 月的调研和目标设计。竞品描述限于当时分析的版本；未提供可复现依据的性能数字不作为当前产品对比。T+1 整理、PPR 和示例配置是目标设计，不代表已实现或默认启用的能力。当前记忆接口见[记忆 API](../zh/api/16-memory.md)。
 
 ## 1. 概述
 
@@ -1824,6 +1824,8 @@ Phase 4: 返回
 
 **举例：**
 
+以下仅演示配置表的一跳加权传播：每个种子的初始传播量设为 1，只计算图中列出的边，不计回流或重启项；base_score 只用于最后合并。这不是归一化、迭代收敛后的 PPR 数值。
+
 ```
 seed = {code_review.md(0.8), Python_style.md(0.7)}
 
@@ -1832,10 +1834,12 @@ PPR 传播 (damping=0.85, 按 3.2.7.4 配置表):
   Python_style.md →[evolved_from, links, w=0.3]→ old_style.md
 
 结果:
-  caroline.md:     0.7×0.85 = 0.60  (补充召回，向量未命中)
-  old_style.md:    0.3×0.85 = 0.26  (高于默认 min_ppr_score=0.05，保留)
+  caroline.md:     0.7×0.85 = 0.595  (补充召回，向量未命中)
+  old_style.md:    0.3×0.85 = 0.255  (高于设计值 min_ppr_score=0.05，保留)
+  code_review.md:  0.7×0.8 + 0.3×0 = 0.56  (无入边贡献)
+  Python_style.md: 0.7×0.7 + 0.3×0 = 0.49  (无入边贡献)
 
-返回 [code_review.md, Python_style.md, caroline.md, old_style.md]
+按 final_score 返回 [caroline.md, code_review.md, Python_style.md, old_style.md]
   caroline.md 是向量未命中但 PPR 补充召回的高关联文件
 ```
 
@@ -1856,10 +1860,10 @@ ExtractLoop 的 prefetch 阶段，将 PPR 高分文件主动读入 LLM 上下文
   seed1: entities/caroline.md       (命中"Caroline")
   seed2: preferences/go_interest.md (命中"Go语言")
 
-PPR 传播（多种子叠加，按 3.2.7.4 配置表）:
-  caroline.md →[belongs_to, links, w=0.7]→ Python_style.md: 0.7 × 0.85 = 0.60
-  go_interest.md →[evolved_from, links, w=0.3]→ Python_style.md: 0.3 × 0.85 = 0.26
-  Python_style.md 的 ppr_score = 0.60 + 0.26 = 0.86  ← 桥接文件，多种子叠加
+一跳加权传播（沿用上例的单位初始传播量，按 3.2.7.4 配置表）:
+  caroline.md →[belongs_to, links, w=0.7]→ Python_style.md: 0.7 × 0.85 = 0.595
+  go_interest.md →[evolved_from, links, w=0.3]→ Python_style.md: 0.3 × 0.85 = 0.255
+  Python_style.md 的 ppr_score = 0.595 + 0.255 = 0.85  ← 桥接文件，多种子叠加
 
   Python_style.md 连接了两个种子，向量搜索未命中（query 没提 Python），
   但 PPR 多种子传播使其自动浮出
@@ -1928,7 +1932,7 @@ PPR 传播（多种子叠加，按 3.2.7.4 配置表）:
 | 链接参与检索 | Backlink boost（简单排序加分，非图传播） | 编译产物参与搜索 | 4 信号图扩展参与排序 | PPR 图增强，链接直接参与检索排序 |
 | 知识可信度 | 无 | Claims + 矛盾检测 + 新鲜度评估 | Lint 检查（结构+语义） | links 已覆盖矛盾/演变/权重/溯源，不引入独立 claims 层 |
 
-**OpenViking 的差异化：**
+**OpenViking 的目标设计（不作为当前功能清单）：**
 - 支持链接权重（weight），支持更精细的关联强度
 - 支持行号级链接精度（target_ranges），检索时可只读目标行范围，减少 token 消耗
 - 支持 hook 攒批提取 + 资源目录提取双模式在线写入

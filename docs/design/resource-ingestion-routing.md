@@ -284,7 +284,7 @@ ResourceService
 
 Connector 不返回本地 `ParseResult`，也不调用当前进程的 `TreeBuilder`。OpenViking 只负责校验这次请求能否无损委派、提交任务、返回 OpenViking `task_id`，再把 Connector 的终态同步到任务记录。
 
-Connector 当前要求提供精确 `to`，不接受 `parent`；支持通过 `watch_interval` 创建 Connector Watch，但不支持 `wait=true`、instruction、关闭建索引、摘要、strict、include/exclude 等。Watch 的共享目标与重试语义见[资源 API](../zh/api/02-resources.md)。无凭证的 Git 请求可回退到标准链；带 Connector 专用凭证的 Git 和 Connector-only 来源会立即报错，避免凭证落入本地持久化任务。
+Connector 当前要求提供精确 `to`，不接受 `parent`；支持通过 `watch_interval` 创建 Connector Watch，但不支持 `wait=true`、instruction、关闭建索引、摘要、strict 及通用 include/exclude 过滤；TOS 的 `args.exclude` 是例外，需配合 `args.tos_prefix` 使用。Watch 的共享目标与重试语义见[资源 API](../zh/api/02-resources.md)。无法无损委派时，无 Connector 专用凭证的 Git 请求可回退到标准链；带 Connector 专用凭证的 Git 和 Connector-only 来源会立即报错，避免凭证落入本地持久化任务。
 
 ## `wait` 的准确含义
 

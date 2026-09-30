@@ -36,7 +36,7 @@ OpenViking 相关操作分属**两个不同的面**，各用各的 Key，混用�
   配置库的 OpenViking APIKey 并记录 user 身份 → 飞书 CLI。
 - 不在对话中展示、复述、记录 APIKey、Token、Cookie 等敏感凭据明文；配置凭据
   优先走环境变量或配置文件，不要求用户把 Key 粘贴进聊天。
-- **建库会产生费用**：创建前说明计费方式并取得用户确认。库数量上限以当前控制台和服务返回为准。
+- **建库是计费动作**，且每账号最多 20 个库：创建前必须向用户确认。
 - 默认创建**个人版**库，除非用户明确要求团队版。
 - 示例中避免真实客户名，统一用"某客户 / 某商机 / 某项目"等泛化表达。
 
@@ -45,7 +45,7 @@ OpenViking 相关操作分属**两个不同的面**，各用各的 Key，混用�
 1. 检查环境（如 `AGENTPLAN_API_KEY` 环境变量、已安全记录的凭据、会话安全上下文）
    中是否已有 AgentPlan APIKey。只判断"是否存在/是否可用"，不要输出明文。
 2. 有 Key 时，用一次**只读**控制面调用验证可用性（`list_collections` 或
-   `ov-cp list`）。这一步验证控制面权限；费用和额度以当前服务规则为准。
+   `ov-cp list`）——只读操作不消耗 AgentPlan 额度。
 3. 没有 Key 时，引导用户去方舟控制台购买 AgentPlan 并新建 APIKey：
    https://console.volcengine.com/ark/region:cn-beijing/subscription/agent-plan?projectName=default
    然后暂停建库及之后的流程，等用户配置好再继续。
@@ -97,9 +97,9 @@ CLI 在同一个包里），境内网络给 uv 配 PyPI 镜像即可，不依赖
 
 1. 询问库名（不要自行编造）。库名建议用**英文/下划线**（如
    `sales_opportunity_kb`），中文名可能不被接受；可另记一个中文别名用于展示。
-2. 建库前确认库名、版本和计费方式，并检查当前账号配额。个人 AgentPlan 与企业席位的计费参数不同，不能只凭 Key 存在就采用默认计费。
+2. 建库前向用户确认：这是计费动作，且每账号最多 20 个库。
 3. 用户确认后调用 `create_collection`（或 `ov-cp create --name <库名>`）。
-   默认计费是个人 AgentPlan；企业席位需按[控制面说明](https://github.com/volcengine/mcp-server/tree/main/server/mcp_server_openviking_controlplane#cli-usage)显式指定计费方式和席位。模型凭据使用 AgentPlan Key。
+   个人版走默认参数即可，模型配置会自动回落到 AgentPlan。
 4. 创建返回 `ResourceID`（形如 `ov-xxxxxxxx`），**此时库还没就绪，返回结果里
    也没有 OpenViking APIKey**——这是正常的，进入 Step 4。
 
@@ -218,7 +218,7 @@ APIKey。让用户把 Key 配置到数据面工具的环境变量/配置中，�
 |---|---|---|
 | 无 AgentPlan APIKey | 未购买/未配置 | 给控制台链接，暂停建库 |
 | create 返回 `ProductUnordered` | 未开通 AgentPlan 抵扣 | 引导控制台开通抵扣，不要重试 |
-| create 返回超限 | 已达当前账号配额 | 先检查并复用合适的现有库；删除库需单独确认数据备份和删除范围 |
+| create 返回超限 | 已达 20 库上限 | 先检查并复用合适的现有库；删除库需单独确认数据备份和删除范围 |
 | api-key 调用超时 | 库可能未就绪，也可能是网络或服务异常 | 查询库状态；INIT 时等待，READY 后仍超时则检查端点和服务错误 |
 | 控制面 MCP / `ov-cp` 不可用 | 缺控制面能力 | 走 Step 2 征求安装同意，或控制台手工建库 |
 | 拿不到 OpenViking APIKey | — | 控制台「鉴权管理 → 显示鉴权凭证」兜底 |

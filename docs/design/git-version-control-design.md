@@ -73,9 +73,8 @@ GitService · ObjectStore · RefStore"]
     end
 
     subgraph Backends[底层存储后端]
-        Local["LocalFileSystem
-(本地磁盘)"]
-        S3["S3Client
+        Local["本地磁盘"]
+        S3["S3 兼容对象存储
 (TOS / S3 / OSS)"]
     end
 
@@ -85,8 +84,8 @@ GitService · ObjectStore · RefStore"]
     RBC --> GitMod
     GitMod -- "restore 写回阶段" --> MFS
     MFS --> Plugins
-    Plugins --> Local
-    Plugins --> S3
+    Plugins -- "LocalFileSystem" --> Local
+    Plugins -- "S3Client" --> S3
     GitMod -- "tokio::fs
 (不经过 MountableFS)" --> Local
     GitMod -- "aws_sdk_s3::Client
@@ -133,8 +132,8 @@ sequenceDiagram
     V-->>U: bytes
 
     Note over U,R: --- restore (写回 VFS) ---
-    U->>V: restore(source_commit, project_dir)
-    V->>B: git_restore(account, source_commit, project_dir, dry_run)
+    U->>V: restore(source_commit=..., project_dir=...)
+    V->>B: git_restore(account=..., source_commit=..., project_dir=..., dry_run=...)
     B->>G: GitService::restore
     G->>O: 加载 commit → root tree → 递归列 (path, blob_oid)
     G->>M: stat / read 对比当前态
