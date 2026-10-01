@@ -13,9 +13,9 @@ OpenViking 提供透明的静态数据加密，确保多租户环境下的数据
 
 加密功能的概念说明见 [数据加密](../concepts/10-encryption.md)。
 
-## 多写存储中的加密
+## 主备存储中的加密
 
-多写存储复用同一套透明加密机制。加密仍在 RAGFS 内部完成，Python SDK、HTTP API 和 CLI 不需要处理加解密。
+主备存储复用同一套透明加密机制。加密仍在 RAGFS 内部完成，Python SDK、HTTP API 和 CLI 不需要处理加解密。
 
 规则：
 
@@ -24,7 +24,7 @@ OpenViking 提供透明的静态数据加密，确保多租户环境下的数据
 - `.redirect.json` 和 `.sync_log.json` 等多写内部元数据跟随 primary 加密策略。
 - OpenViking 不提供也不需要公开的加解密 API 来操作这些内部文件。
 
-更多多写配置见 [多写存储指南](./13-multi-write-storage.md)。
+更多多写配置见 [主备存储指南](./13-multi-write-storage.md)。
 
 ## 快速开始
 

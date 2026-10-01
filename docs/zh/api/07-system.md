@@ -412,7 +412,7 @@ ov system wait --timeout 60
 
 ### backend_sync_status()
 
-查询指定 Viking URI 子树在多写存储后端之间的同步状态。该接口要求 ROOT 或 ADMIN 权限。
+查询指定 Viking URI 子树在主备存储后端之间的同步状态。该接口要求 ROOT 或 ADMIN 权限。
 
 **HTTP API**
 
